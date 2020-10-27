@@ -1,8 +1,7 @@
 /*
- * mm-implicit.c - The best malloc package EVAR!
- * 
- * TODO (bug): mm_realloc and mm_calloc don't seem to be working...
- * TODO (bug): The allocator doesn't re-use space very well...
+ * mm-explicit.c - The best malloc package EVAR!
+ *
+ * TODO (bug): Uh..this is an implicit list???
  */
 
 #include <assert.h>
