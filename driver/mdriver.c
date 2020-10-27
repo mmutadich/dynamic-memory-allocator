@@ -455,7 +455,7 @@ int main(int argc, char **argv)
         printf("Score = 0\n");
 	}
 
-	exit(0);
+	return errors;
 }
 
 
