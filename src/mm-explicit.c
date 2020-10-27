@@ -6,8 +6,8 @@
 
 #include <stdint.h>
 
-#include "mm.h"
 #include "memlib.h"
+#include "mm.h"
 
 /** The required alignment of heap payloads */
 const size_t ALIGNMENT = 2 * sizeof(size_t);
@@ -54,11 +54,8 @@ static bool is_allocated(block_t *block) {
  */
 static block_t *find_fit(size_t size) {
     // Traverse the blocks in the heap using the implicit list
-    for (
-        block_t *curr = mm_heap_first;
-        mm_heap_last != NULL && curr <= mm_heap_last;
-        curr = (void *) curr + get_size(curr)
-    ) {
+    for (block_t *curr = mm_heap_first; mm_heap_last != NULL && curr <= mm_heap_last;
+         curr = (void *) curr + get_size(curr)) {
         // If the block is free and large enough for the allocation, return it
         if (!is_allocated(curr) && get_size(curr) >= size) {
             return curr;
@@ -71,7 +68,6 @@ static block_t *find_fit(size_t size) {
 static block_t *block_from_payload(void *ptr) {
     return ptr - offsetof(block_t, payload);
 }
-
 
 /**
  * mm_init - Initializes the allocator state
@@ -157,5 +153,4 @@ void *mm_calloc(size_t nmemb, size_t size) {
  * mm_checkheap - So simple, it doesn't need a checker!
  */
 void mm_checkheap(void) {
-
 }
