@@ -1,14 +1,14 @@
 #ifndef MM_H
 #define MM_H
 
-#include <stdio.h>
 #include <stdbool.h>
+#include <stddef.h>
 
-extern bool mm_init(void);
-extern void *mm_malloc(size_t size);
-extern void mm_free(void *ptr);
-extern void *mm_realloc(void *ptr, size_t size);
-extern void *mm_calloc(size_t nmemb, size_t size);
-extern void mm_checkheap();
+bool mm_init(void);
+void *mm_malloc(size_t size);
+void mm_free(void *ptr);
+void *mm_realloc(void *ptr, size_t size);
+void *mm_calloc(size_t nmemb, size_t size);
+void mm_checkheap(void);
 
 #endif /* MM_H */

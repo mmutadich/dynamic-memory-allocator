@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <sys/types.h>
 
 void mem_init(void);
 void mem_deinit(void);

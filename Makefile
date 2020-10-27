@@ -2,7 +2,7 @@
 # Makefile for the malloc lab driver
 #
 CC = clang
-CFLAGS = -Werror -Wall -Wextra -O3 -g -DDRIVER
+CFLAGS = -Werror -Wall -Wextra -O3 -g
 
 all: bin/mdriver-implicit bin/mdriver-explicit
 
@@ -15,7 +15,7 @@ bin/mdriver-explicit: out/mdriver-explicit.o out/mm-explicit.o out/memlib.o out/
 out/mdriver-implicit.o: driver/mdriver.c
 	$(CC) $(CFLAGS) -c -DSTAGE0 $^ -o $@
 
-out/mdriver-explicit.o: driver/mdriver.c 
+out/mdriver-explicit.o: driver/mdriver.c
 	$(CC) $(CFLAGS) -c -DSTAGE1 $^ -o $@
 
 out/%.o: src/%.c
@@ -25,4 +25,4 @@ out/%.o: driver/%.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:
-	rm -f *~ out/*.o bin/*
+	rm -f out/* bin/*
