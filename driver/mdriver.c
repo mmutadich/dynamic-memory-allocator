@@ -445,7 +445,7 @@ int main(int argc, char **argv)
 		if (perfscore <= 0) {
 		    perfscore = 0;
 		}
-		printf("Score = %.0f/60\n", 60.0*(perfscore)/(100.0 - BUMP));
+		printf("Score = %.0f/60\n", 60.0*((perfscore)/(100.0 - BUMP)));
 #endif
 
 	}
