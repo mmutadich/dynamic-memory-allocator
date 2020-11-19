@@ -86,7 +86,6 @@ typedef struct {
  */
 typedef struct {
 	trace_t *trace;
-	range_t *ranges;
 } speed_t;
 
 /* Summarizes the important stats for some malloc function on some trace */
@@ -184,9 +183,10 @@ static void app_error(const char *fmt, ...)
    num_tracefiles, if there's a timeout) */
 static void run_tests(int num_tracefiles, const char *tracedir,
 		char **tracefiles,
-		stats_t *mm_stats, range_t *ranges, speed_t *speed_params) {
+		stats_t *mm_stats, speed_t *speed_params) {
 	volatile int i;
 
+	range_t *ranges = NULL; /* keeps track of block extents for one trace */
 	for (i=0; i < num_tracefiles; i++) {
 		trace_t *trace;
 		trace = read_trace(&mm_stats[i], tracedir, tracefiles[i]);
@@ -195,6 +195,7 @@ static void run_tests(int num_tracefiles, const char *tracedir,
 		if (verbose > 1)
 			printf("Checking mm_malloc for correctness, ");
 		mm_stats[i].valid = eval_mm_valid(trace, &ranges);
+		clear_ranges(&ranges);
 
 		if (onetime_flag) {
 			free_trace(trace);
@@ -205,7 +206,6 @@ static void run_tests(int num_tracefiles, const char *tracedir,
 				printf("efficiency, ");
 			mm_stats[i].util = eval_mm_util(trace, i);
 			speed_params->trace = trace;
-			speed_params->ranges = ranges;
 			if (verbose > 1)
 				printf("and performance.\n");
 			mm_stats[i].secs = fsecs(eval_mm_speed, speed_params);
@@ -224,7 +224,6 @@ int main(int argc, char **argv)
 	char **tracefiles = NULL;  /* null-terminated array of trace file names */
 	int num_tracefiles = 0;    /* the number of traces in that array */
 
-	range_t *ranges = NULL;    /* keeps track of block extents for one trace */
 	stats_t *libc_stats = NULL;/* libc stats for each trace */
 	stats_t *mm_stats = NULL;  /* mm (i.e. student) stats for each trace */
 	speed_t speed_params;      /* input parameters to the xx_speed routines */
@@ -349,9 +348,10 @@ int main(int argc, char **argv)
 	/* Initialize the simulated memory system in memlib.c */
 	mem_init();
 
-	run_tests(num_tracefiles, tracedir, tracefiles, mm_stats,
-			ranges, &speed_params);
+	run_tests(num_tracefiles, tracedir, tracefiles, mm_stats, &speed_params);
 
+	mem_deinit();
+	deinit_fsecs();
 
 	/* Display the mm results in a compact table */
 	if (verbose) {
@@ -369,6 +369,13 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (tracefiles != default_tracefiles) {
+		for (i = 0; i < num_tracefiles; i++) {
+			free(tracefiles[i]);
+		}
+		free(tracefiles);
+	}
+
 	/*
 	 * Accumulate the aggregate statistics for the student's mm package
 	 */
@@ -384,6 +391,7 @@ int main(int argc, char **argv)
 		if (mm_stats[i].valid)
 			numcorrect++;
 	}
+	free(mm_stats);
 	if(weight == 0)
 		avg_mm_util = 0;
 	else
@@ -769,7 +777,6 @@ static int eval_mm_valid(trace_t *trace, range_t **ranges)
 
 	/* Reset the heap and free any records in the range list */
 	mem_reset_brk();
-	clear_ranges(ranges);
 	reinit_trace(trace);
 
 	/* Call the mm package's init function */

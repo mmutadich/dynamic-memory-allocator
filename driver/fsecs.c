@@ -54,4 +54,7 @@ double fsecs(fsecs_test_funct f, void *argp)
 #endif
 }
 
+void deinit_fsecs(void) {
+    deinit_fcyc();
+}
 

@@ -250,6 +250,9 @@ void set_fcyc_epsilon(double epsilon_arg)
     epsilon = epsilon_arg;
 }
 
+void deinit_fcyc(void) {
+    free(cache_buf);
+}
 
 
 
