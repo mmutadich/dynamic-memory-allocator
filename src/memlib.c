@@ -3,15 +3,15 @@
  *            allows us to interleave calls from the student's malloc package
  *            with the system's malloc package in libc.
  */
-#include <stdint.h>
-#include <stdio.h>
-#include <sys/mman.h>
-#include <string.h>
-#include <errno.h>
-
 #include "memlib.h"
 
-#define MAX_HEAP (100*(1<<20))  /* 100 MB */
+#include <errno.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/mman.h>
+
+#define MAX_HEAP (100 * (1 << 20)) /* 100 MB */
 
 /* private variables */
 static uint8_t *heap;
@@ -21,17 +21,13 @@ static uint8_t *mem_brk;
  * mem_init - initialize the memory system model
  */
 void mem_init() {
-    heap = mmap(
-        (void *) 0x800000000,        /* suggested start*/
-        MAX_HEAP,                    /* length */
-        PROT_READ | PROT_WRITE,      /* heap can be read or written */
-        MAP_PRIVATE | MAP_ANONYMOUS, /* initialize region with zeros */
-        -1,                          /* fd (unused) */
-        0                            /* offset (unused) */
+    heap = mmap((void *) 0x800000000,        /* suggested start*/
+                MAX_HEAP,                    /* length */
+                PROT_READ | PROT_WRITE,      /* heap can be read or written */
+                MAP_PRIVATE | MAP_ANONYMOUS, /* initialize region with zeros */
+                -1,                          /* fd (unused) */
+                0                            /* offset (unused) */
     );
-
-    /* Fill heap with garbage since it is uninitialized. */
-    memset(heap, 0xCC, MAX_HEAP);
 
     /* Heap is initially empty. */
     mem_reset_brk();
@@ -49,6 +45,9 @@ void mem_deinit() {
  */
 void mem_reset_brk() {
     mem_brk = heap;
+
+    /* Fill heap with garbage since it is uninitialized. */
+    memset(heap, 0xCC, MAX_HEAP);
 }
 
 /*
@@ -79,15 +78,13 @@ void *mem_heap_lo() {
 /*
  * mem_heap_hi - return address of last heap byte
  */
-void *mem_heap_hi()
-{
+void *mem_heap_hi() {
     return mem_brk - 1;
 }
 
 /*
  * mem_heapsize() - returns the heap size in bytes
  */
-size_t mem_heapsize()
-{
+size_t mem_heapsize() {
     return mem_brk - heap;
 }
