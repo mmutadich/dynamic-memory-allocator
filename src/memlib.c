@@ -30,7 +30,7 @@ void mem_init() {
     );
 
     /* Heap is initially empty. */
-    mem_reset_brk();
+    mem_reset_brk(true);
 }
 
 /*
@@ -43,11 +43,13 @@ void mem_deinit() {
 /*
  * mem_reset_brk - reset the simulated brk pointer to make an empty heap
  */
-void mem_reset_brk() {
+void mem_reset_brk(bool clear) {
     mem_brk = heap;
 
     /* Fill heap with garbage since it is uninitialized. */
-    memset(heap, 0xCC, MAX_HEAP);
+    if (clear) {
+        memset(heap, 0xCC, MAX_HEAP);
+    }
 }
 
 /*

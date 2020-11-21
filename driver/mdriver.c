@@ -776,7 +776,7 @@ static int eval_mm_valid(trace_t *trace, range_t **ranges)
 	char *p;
 
 	/* Reset the heap and free any records in the range list */
-	mem_reset_brk();
+	mem_reset_brk(true);
 	reinit_trace(trace);
 
 	/* Call the mm package's init function */
@@ -918,7 +918,7 @@ static double eval_mm_util(trace_t *trace, int tracenum)
 	reinit_trace(trace);
 
 	/* initialize the heap and the mm malloc package */
-	mem_reset_brk();
+	mem_reset_brk(false);
 	if (!mm_init()) {
 		app_error("trace %d: mm_init failed in eval_mm_util", tracenum);
     }
@@ -1004,7 +1004,7 @@ static void eval_mm_speed(void *ptr)
 	reinit_trace(trace);
 
 	/* Reset the heap and initialize the mm package */
-	mem_reset_brk();
+	mem_reset_brk(false);
 	if (!mm_init()) {
 		app_error("mm_init failed in eval_mm_speed");
     }
