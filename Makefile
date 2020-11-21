@@ -1,15 +1,26 @@
 #
 # Makefile for the malloc lab driver
 #
-CC = clang
-CFLAGS = -Werror -Wall -Wextra -O3 -g
+
+CLEAN_COMMAND = rm -f out/* bin/*
+ifdef DEBUG
+  CC = clang-with-asan
+  CFLAGS = -Werror -Wall -Wextra
+  ifeq ($(wildcard .debug),)
+    $(shell $(CLEAN_COMMAND))
+    $(shell touch .debug)
+  endif
+else
+  CC = clang
+  CFLAGS = -Werror -Wall -Wextra -O3 -g
+  ifneq ($(wildcard .debug),)
+    $(shell $(CLEAN_COMMAND) .debug)
+  endif
+endif
 
 all: bin/mdriver-implicit bin/mdriver-explicit
 
-bin/mdriver-implicit: out/mdriver-implicit.o out/mm-implicit.o out/memlib.o out/fsecs.o out/fcyc.o out/clock.o out/ftimer.o
-	$(CC) $(CFLAGS) $^ -o $@
-
-bin/mdriver-explicit: out/mdriver-explicit.o out/mm-explicit.o out/memlib.o out/fsecs.o out/fcyc.o out/clock.o out/ftimer.o
+bin/mdriver-%: out/mdriver-%.o out/mm-%.o out/memlib.o out/fsecs.o out/fcyc.o out/clock.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 out/mdriver-implicit.o: driver/mdriver.c
@@ -25,4 +36,6 @@ out/%.o: driver/%.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:
-	rm -f out/* bin/*
+	$(CLEAN_COMMAND)
+
+.PRECIOUS: bin/mdriver-% out/mdriver-implicit.o out/mdriver-explicit.o out/%.o
