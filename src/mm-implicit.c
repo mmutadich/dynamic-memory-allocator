@@ -66,7 +66,7 @@ static block_t *find_fit(size_t size) {
 }
 
 /** Gets the header corresponding to a given payload pointer */
-static block_t *block_from_payload(void *ptr) {
+static block_t * block_from_payload(void *ptr) {
     return ptr - offsetof(block_t, payload);
 }
 
@@ -136,18 +136,36 @@ void mm_free(void *ptr) {
  *      copying its data, and mm_freeing the old block.
  */
 void *mm_realloc(void *old_ptr, size_t size) {
-    (void) old_ptr;
-    (void) size;
+    block_t *old_block = (block_t *)old_ptr;
+    if(old_block == NULL){
+        return mm_malloc(size);
+    }
+    if (size == 0){
+        mm_free(old_block);
+        return NULL;
+    }
+    if (old_block != NULL){
+        size = round_up(sizeof(block_t) + size, ALIGNMENT);
+        uint8_t *payload = mm_malloc(size);
+        size_t smaller = size;
+        if (size > get_size(old_block)){
+                smaller = get_size(old_block);
+            }
+        size_t size_new = smaller - sizeof(size_t);
+        memcpy(payload, (block_t *)old_ptr, size_new);
+        return payload;
+    }
     return NULL;
 }
 
 /**
  * mm_calloc - Allocate the block and set it to zero.
  */
-void *mm_calloc(size_t nmemb, size_t size) {
-    (void) nmemb;
-    (void) size;
-    return NULL;
+void *mm_calloc(size_t nmemb, size_t size){
+    size = round_up(sizeof(block_t) + size, ALIGNMENT);
+    uint8_t *payload = mm_malloc(size);
+    memset(payload, nmemb, size);
+    return payload;
 }
 
 /**

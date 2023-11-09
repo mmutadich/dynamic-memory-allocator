@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
-
+#include <string.h>
 void mem_init(void);
 void mem_deinit(void);
 void *mem_sbrk(ssize_t incr);

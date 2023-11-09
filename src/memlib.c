@@ -3,8 +3,8 @@
  *            allows us to interleave calls from the student's malloc package
  *            with the system's malloc package in libc.
  */
-#include "memlib.h"
 
+#include "memlib.h"
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
