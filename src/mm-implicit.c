@@ -86,6 +86,15 @@ bool mm_init(void) {
     return true;
 }
 
+
+// block_t *block_splitting(block_t *big_block,  size_t size_to_use){
+//     size_t remains = get_size(big_block);
+//     set_header(big_block, size_to_use, true);
+//     block_t *shortened_block = (block_t *)((uint8_t *)big_block + size_to_use);
+//     set_header(shortened_block, remains - size_to_use, false);
+//     return big_block;
+// }
+
 /**
  * mm_malloc - Allocates a block with the given size
  */
@@ -96,6 +105,10 @@ void *mm_malloc(size_t size) {
     // If there is a large enough free block, use it
     block_t *block = find_fit(size);
     if (block != NULL) {
+        //if (get_size(block) > (size + sizeof(block_t))){
+            //block_t *hm_block = block_splitting(block, size);
+            //return hm_block->payload;
+        //}
         set_header(block, get_size(block), true);
         return block->payload;
     }
@@ -136,23 +149,21 @@ void mm_free(void *ptr) {
  *      copying its data, and mm_freeing the old block.
  */
 void *mm_realloc(void *old_ptr, size_t size) {
-    block_t *old_block = (block_t *) old_ptr;
-    if (old_block == NULL) {
+    if (old_ptr == NULL) {
         return mm_malloc(size);
     }
     if (size == 0) {
-        mm_free(old_block);
+        mm_free(old_ptr);
         return NULL;
     }
-    if (old_block != NULL) {
-        size = round_up(sizeof(block_t) + size, ALIGNMENT);
+    if (old_ptr != NULL) {
         uint8_t *payload = mm_malloc(size);
-        size_t smaller = size;
-        if (size > get_size(old_block)) {
-            smaller = get_size(old_block);
+        size_t amount = get_size(old_ptr) - sizeof(size_t);
+        if (size < get_size(old_ptr) - sizeof(size_t)) {
+            amount = size;
         }
-        size_t size_new = smaller - sizeof(size_t);
-        memcpy(payload, (block_t *) old_ptr, size_new);
+        memcpy(payload, old_ptr, amount);
+        mm_free(old_ptr);
         return payload;
     }
     return NULL;
@@ -162,9 +173,8 @@ void *mm_realloc(void *old_ptr, size_t size) {
  * mm_calloc - Allocate the block and set it to zero.
  */
 void *mm_calloc(size_t nmemb, size_t size) {
-    size = round_up(sizeof(block_t) + size, ALIGNMENT);
-    uint8_t *payload = mm_malloc(size);
-    memset(payload, nmemb, size);
+    uint8_t *payload = mm_malloc(size * nmemb);
+    memset(payload, 0, size * nmemb);
     return payload;
 }
 
