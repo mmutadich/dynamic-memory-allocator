@@ -86,37 +86,44 @@ bool mm_init(void) {
     return true;
 }
 
-// void block_coalescing(){
-//     block_t *curr = mm_heap_first;
-//     while (mm_heap_last != NULL && curr <= mm_heap_last){
-//         block_t *next = (void *) curr + get_size(curr);
-//         if (!is_allocated(curr)) {
-//             while (!is_allocated(next)){
-//                 if (next == mm_heap_last){
-//                     set_header(curr, get_size(curr) + get_size(next) , false);
-//                     mm_heap_last = curr;
-//                     return;
-//                 }
-//                 set_header(curr, get_size(curr) + get_size(next) , false);
-//                 next = (void *) curr + get_size(curr);
-//             }
-//         }
-//         curr = next;
-//     }
-// }
+void block_coalescing(){
+    block_t *curr = mm_heap_first;
+    while (mm_heap_last != NULL && curr <= mm_heap_last){
+        block_t *next = (void *) curr + get_size(curr);
+        if (!is_allocated(curr)) {
+            if ( curr == mm_heap_last){
+                return;
+            }
+            while (!is_allocated(next)){
+                if (next == mm_heap_last){
+                    set_header(curr, get_size(curr) + get_size(next) , false);
+                    mm_heap_last = curr;
+                    return;
+                }
+                set_header(curr, get_size(curr) + get_size(next) , false);
+                next = (void *) curr + get_size(curr);
+            }
+        }
+        curr = next;
+    }
+}
 
 block_t *block_splitting(block_t *big_block, size_t size_to_use) {
+    block_t *temp = big_block;
     size_t remains = get_size(big_block);
     set_header(big_block, size_to_use, true);
     block_t *shortened_block = (block_t *) ((uint8_t *) big_block + size_to_use);
     set_header(shortened_block, remains - size_to_use, false);
+    if (temp == mm_heap_last){
+        mm_heap_last = shortened_block;
+    }
     return big_block;
 }
 /**
  * mm_malloc - Allocates a block with the given size
  */
 void *mm_malloc(size_t size) {
-    //block_coalescing();
+    block_coalescing();
     // The block must have enough space for a header and be 16-byte aligned
     size = round_up(sizeof(block_t) + size, ALIGNMENT);
 
