@@ -86,14 +86,13 @@ bool mm_init(void) {
     return true;
 }
 
-
-// block_t *block_splitting(block_t *big_block,  size_t size_to_use){
-//     size_t remains = get_size(big_block);
-//     set_header(big_block, size_to_use, true);
-//     block_t *shortened_block = (block_t *)((uint8_t *)big_block + size_to_use);
-//     set_header(shortened_block, remains - size_to_use, false);
-//     return big_block;
-// }
+block_t *block_splitting(block_t *big_block,  size_t size_to_use){
+    size_t remains = get_size(big_block);
+    set_header(big_block, size_to_use, true);
+    block_t *shortened_block = (block_t *)((uint8_t *)big_block + size_to_use);
+    set_header(shortened_block, remains - size_to_use, false);
+    return big_block;
+}
 
 /**
  * mm_malloc - Allocates a block with the given size
@@ -105,10 +104,10 @@ void *mm_malloc(size_t size) {
     // If there is a large enough free block, use it
     block_t *block = find_fit(size);
     if (block != NULL) {
-        //if (get_size(block) > (size + sizeof(block_t))){
-            //block_t *hm_block = block_splitting(block, size);
-            //return hm_block->payload;
-        //}
+        if (get_size(block) > (size + sizeof(block_t))){
+            block_t *hm_block = block_splitting(block, size);
+            return hm_block->payload;
+        }
         set_header(block, get_size(block), true);
         return block->payload;
     }
