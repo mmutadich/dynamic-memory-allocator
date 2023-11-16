@@ -81,9 +81,11 @@ static void remove_from_list(free_block_t *block) {
     else if (block == free_list_start) {
         free_list_start = block->next;
         free_list_start->prev = NULL;
-    } else if (block->next == NULL){
+    }
+    else if (block->next == NULL) {
         block->prev->next = NULL;
-    }else {
+    }
+    else {
         free_block_t *before = block->prev;
         free_block_t *after = block->next;
         before->next = after;
@@ -260,6 +262,7 @@ void *mm_calloc(size_t nmemb, size_t size) {
  */
 void mm_checkheap(void) {
     size_t free_blocks = 0;
+    //checks that the footer == header
     for (block_t *curr = mm_heap_first; mm_heap_last != NULL && curr <= mm_heap_last;
          curr = (void *) curr + get_size(curr)) {
         if (!is_allocated(curr)) {
@@ -270,7 +273,7 @@ void mm_checkheap(void) {
             printf("\nFOOTER NOT EQUAL TO HEADER");
         }
     }
-    //printf("\n%ld", free_blocks);
+    // checks I can traverse free list forwards
     free_block_t *curr = free_list_start;
     if (free_list_start != NULL) {
         size_t counter = 1;
@@ -278,10 +281,12 @@ void mm_checkheap(void) {
             curr = curr->next;
             counter += 1;
         }
+        //checks all free blocks are in the free list
         if (free_blocks != counter) {
             printf("\nNot all free blocks in list");
         }
         counter -= 1;
+        //checks I can traverse free list backwards
         while (curr->prev != NULL) {
             curr = curr->prev;
             counter -= 1;
