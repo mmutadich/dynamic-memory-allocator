@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "memlib.h"
 #include "mm.h"
@@ -103,19 +104,19 @@ static size_t get_size(block_t *block) {
     return block->header & ~1;
 }
 
-/*
+
 static block_t *get_backward(block_t *block){
     size_t *prev_footer = (size_t *) ((uint8_t *) block - sizeof(size_t));
     size_t size = (*(prev_footer)) & ~1;
     block_t *prev_block = (block_t *) ((uint8_t *) block - size);
-    return prev_block
+    return prev_block;
 }
 
 static block_t *get_forward(block_t *block){
     block_t *next_block = (block_t *) ((uint8_t *) block + get_size(block));
-    return next_block
+    return next_block;
 }
-*/
+
 
 /** Set's a block's header with the given size and allocation state */
 static void set_header(block_t *block, size_t size, bool is_allocated) {
@@ -167,6 +168,27 @@ bool mm_init(void) {
     return true;
 }
 
+free_block_t *make_and_chain_node(block_t *curr){
+    free_block_t *node = list_node_init(curr);
+    set_header((block_t *) node, get_size((block_t *) node), false);
+    add_to_front(node);
+    return node;
+}
+
+block_t *block_splitting(block_t *big_block, size_t size_to_use, free_block_t *node) {
+    block_t *temp = big_block;
+    size_t remains = get_size(big_block);
+    set_header(big_block, size_to_use, true);
+    block_t *shortened_block = (block_t *) ((uint8_t *) big_block + size_to_use);
+    set_header(shortened_block, remains - size_to_use, false);
+    if (temp == mm_heap_last) {
+        mm_heap_last = shortened_block;
+    }
+    remove_from_list(node);
+    make_and_chain_node(shortened_block);
+    return big_block;
+}
+
 /**
  * mm_malloc - Allocates a block with the given size
  */
@@ -177,12 +199,10 @@ void *mm_malloc(size_t size) {
     // If there is a large enough free block, use it
     free_block_t *block = find_fit(size);
     if (block != NULL) {
-        /*
-        if (get_size(block) > (size + sizeof(block_t) + sizeof(size_t))) {
-            block_t *hm_block = block_splitting(block, size);
+        if (get_size((block_t *)block) > (size + sizeof(block_t) + sizeof(size_t) + sizeof(size_t))) {
+            block_t *hm_block = block_splitting((block_t *)block, size, block);
             return hm_block->payload;
         }
-        */
         block_t *allocated = (block_t *) block;
         set_header(allocated, get_size(allocated), true);
         remove_from_list(block);
@@ -206,21 +226,60 @@ void *mm_malloc(size_t size) {
     return new_block->payload;
 }
 
+void block_coalescing(block_t *curr, block_t *next) {
+    if (next == mm_heap_last){
+        set_header(curr, get_size(curr) + get_size(next), false);
+        mm_heap_last = curr;
+    } else {
+        set_header(curr, get_size(curr) + get_size(next), false);
+    }
+    //remove_from_list(exists);
+    //make_and_chain_node(curr);
+}
+
 /**
  * mm_free - Releases a block to be reused for future allocations
  */
+
+bool backwards_exists(block_t *block){
+    if (block == mm_heap_first){
+        return false;
+    }
+    return true;
+}
+
+bool forwards_exists(block_t *block){
+    if (block == mm_heap_last){
+        return false;
+    }
+    return true;
+}
+
 void mm_free(void *ptr) {
     // mm_free(NULL) does nothing
     if (ptr == NULL) {
         return;
     }
-
     // Mark the block as unallocated
     block_t *block = block_from_payload(ptr);
-    // make a free_block and add it to the linked list
-    free_block_t *node = list_node_init(block);
-    set_header((block_t *) node, get_size((block_t *) node), false);
-    add_to_front(node);
+    if ( backwards_exists(block) && forwards_exists(block) && is_allocated(get_backward(block)) && is_allocated(get_forward(block))){
+        // make a free_block and add it to the linked list
+        make_and_chain_node(block);
+        return;
+    } else if ( backwards_exists(block) && forwards_exists(block) && !is_allocated(get_backward(block)) && !is_allocated(get_forward(block))){
+        remove_from_list((free_block_t *)get_forward(block));
+        block_t *last_block = get_forward(block);
+        block_coalescing(get_backward(block), block);
+        block_coalescing(get_backward(block), last_block);
+    } else if ( backwards_exists(block) && !is_allocated(get_backward(block))){
+        block_coalescing(get_backward(block), block);
+    } else if ( forwards_exists(block) && !is_allocated(get_forward(block))){
+        remove_from_list((free_block_t *)get_forward(block));
+        block_coalescing(block, get_forward(block));
+        add_to_front(list_node_init(block));
+    } else {
+        make_and_chain_node(block);
+    }
 }
 
 /**
@@ -262,9 +321,12 @@ void *mm_calloc(size_t nmemb, size_t size) {
  */
 void mm_checkheap(void) {
     size_t free_blocks = 0;
-    //checks that the footer == header
+    // checks that the footer == header
     for (block_t *curr = mm_heap_first; mm_heap_last != NULL && curr <= mm_heap_last;
          curr = (void *) curr + get_size(curr)) {
+        if (get_size(curr) == 0){
+            printf("\nFUCK thats bad");
+        }
         if (!is_allocated(curr)) {
             free_blocks += 1;
         }
@@ -278,15 +340,18 @@ void mm_checkheap(void) {
     if (free_list_start != NULL) {
         size_t counter = 1;
         while (curr->next != NULL) {
+            if ( is_allocated((block_t *)curr) ){
+                printf("\nThis is very bad");
+            }
             curr = curr->next;
             counter += 1;
         }
-        //checks all free blocks are in the free list
+        // checks all free blocks are in the free list
         if (free_blocks != counter) {
             printf("\nNot all free blocks in list");
         }
         counter -= 1;
-        //checks I can traverse free list backwards
+        // checks I can traverse free list backwards
         while (curr->prev != NULL) {
             curr = curr->prev;
             counter -= 1;
